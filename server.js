@@ -1,12 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
-
+const cors = require("cors");
 const rootRouter = require("./src/routers/rootRouter");
 const mongoCred = require("./src/config/mongo_cred");
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 mongoose.connect(mongoCred.url).then((data) => {
   console.log("data base Connected!");

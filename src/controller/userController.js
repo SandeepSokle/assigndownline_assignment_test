@@ -10,11 +10,6 @@ const signupUser = async (req, res, next) => {
     console.log({ pass });
     console.log({ ...req.body });
 
-    var token = jwt.sign(
-      { name, jobTitle, phoneNumber, email, password, upline },
-      "shhhhh"
-    );
-
     const user = await userModel.create([
       {
         ...req.body,
@@ -22,6 +17,18 @@ const signupUser = async (req, res, next) => {
       },
     ]);
 
+    var token = jwt.sign(
+      {
+        name,
+        jobTitle,
+        phoneNumber,
+        email,
+        password,
+        upline,
+        _id: user._id,
+      },
+      "shhhhh"
+    );
     //   jwt.verify(token, 'shhhhh', function(err, decoded) {
     //     console.log(decoded.foo) // bar
     //   });
@@ -63,6 +70,7 @@ const login = async (req, res, next) => {
         email: user.email,
         password: user.password,
         upline: user.upline,
+        _id: user._id,
       },
       "shhhhh"
     );
@@ -178,4 +186,39 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
-module.exports = { signupUser, login, getUserList, updateUser, deleteUser };
+const getDownUsers = async (req, res, next) => {
+  try {
+    let token = req.headers["authorization"];
+    let myToken = token.split(" ")[1];
+    let myData = jwt.verify(myToken, "shhhhh");
+    console.log({
+      myData: myData,
+    });
+    const userDownlineList = await userModel
+      .find({
+        upline: myData._id,
+      })
+      .select("name jobTitle phoneNumber email");
+
+    res.status(200).send({
+      success: true,
+      message: "Login!",
+      response: { userDownlineList },
+    });
+  } catch (err) {
+    res.status(400).send({
+      success: false,
+      message: "Login failed",
+      error: err,
+    });
+  }
+};
+
+module.exports = {
+  signupUser,
+  login,
+  getUserList,
+  updateUser,
+  deleteUser,
+  getDownUsers,
+};
