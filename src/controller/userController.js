@@ -3,13 +3,6 @@ const saltRounds = 10;
 const jwt = require("jsonwebtoken");
 const userModel = require("../Models/usersModel");
 
-const getUsers = (res, req, next) => {
-  req.send({
-    success: true,
-    message: "in root Router!",
-  });
-};
-
 const signupUser = async (req, res, next) => {
   const { name, jobTitle, phoneNumber, email, password, upline } = req.body;
   try {
@@ -56,6 +49,8 @@ const login = async (req, res, next) => {
       email: email,
     });
 
+    if (!user) throw "User Not exist!";
+
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) throw "User Email and Password Not Match!";
@@ -72,9 +67,11 @@ const login = async (req, res, next) => {
       "shhhhh"
     );
 
-    const userDownlineList = await userModel.find({
-      upline: user._id,
-    });
+    const userDownlineList = await userModel
+      .find({
+        upline: user._id,
+      })
+      .select("name jobTitle phoneNumber email");
 
     res.status(200).send({
       success: true,
@@ -90,4 +87,95 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { getUsers, signupUser, login };
+const getUserList = async (req, res, next) => {
+  try {
+    const users = await userModel
+      .find()
+      .select("name jobTitle phoneNumber email");
+
+    res.status(200).send({
+      success: true,
+      message: "Get Users List!",
+      response: { users, count: users.length },
+    });
+  } catch (err) {
+    res.status(400).send({
+      success: false,
+      message: "Users List fetch failed",
+      error: err,
+    });
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  const { email, password } = req.body;
+  try {
+    let pass = null;
+    if (password) {
+      pass = await bcrypt.hash(password, saltRounds);
+    }
+
+    let my_data = pass
+      ? {
+          ...req.body,
+          password: pass,
+        }
+      : {
+          ...req.body,
+        };
+
+    delete my_data.email;
+
+    const user = await userModel.findOneAndUpdate(
+      {
+        email: email,
+      },
+      {
+        ...my_data,
+      },
+      {
+        new: true,
+      }
+    );
+
+    console.log(user);
+    if (!user) throw "User Not exist with this Email! Please Verify!";
+
+    res.status(200).send({
+      success: true,
+      message: "Update User Successfully!",
+      response: { user },
+    });
+  } catch (err) {
+    res.status(400).send({
+      success: false,
+      message: "Update user failed!",
+      error: err,
+    });
+  }
+};
+
+const deleteUser = async (req, res, next) => {
+  const { email } = req.body;
+  try {
+    const user = await userModel.findOneAndRemove({
+      email: email,
+    });
+
+    if (!user) throw "User Not exist with this Email! Please Verify!";
+
+    res.status(200).send({
+      success: true,
+      message: "Delete User Successfully!",
+      //   response: { user },
+    });
+  } catch (err) {
+    res.status(400).send({
+      success: false,
+      message: "Delete user failed!",
+      error: err,
+    });
+  }
+};
+
+module.exports = { signupUser, login, getUserList, updateUser, deleteUser };
