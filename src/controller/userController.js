@@ -7,15 +7,10 @@ const signupUser = async (req, res, next) => {
   const { name, jobTitle, phoneNumber, email, password, upline } = req.body;
   try {
     let pass = await bcrypt.hash(password, saltRounds);
-    console.log({ pass });
-    console.log({ ...req.body });
-
-    const user = await userModel.create([
-      {
-        ...req.body,
-        password: pass,
-      },
-    ]);
+    const user = await userModel.create({
+      ...req.body,
+      password: pass,
+    });
 
     var token = jwt.sign(
       {
@@ -29,9 +24,6 @@ const signupUser = async (req, res, next) => {
       },
       "shhhhh"
     );
-    //   jwt.verify(token, 'shhhhh', function(err, decoded) {
-    //     console.log(decoded.foo) // bar
-    //   });
 
     res.status(200).send({
       success: true,
@@ -50,8 +42,6 @@ const signupUser = async (req, res, next) => {
 const login = async (req, res, next) => {
   const { phoneNumber, email, password } = req.body;
   try {
-    console.log({ ...req.body });
-
     const user = await userModel.findOne({
       email: email,
     });
@@ -146,7 +136,6 @@ const updateUser = async (req, res, next) => {
       }
     );
 
-    console.log(user);
     if (!user) throw "User Not exist with this Email! Please Verify!";
 
     res.status(200).send({
@@ -165,6 +154,7 @@ const updateUser = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   const { email } = req.body;
+
   try {
     const user = await userModel.findOneAndRemove({
       email: email,
@@ -191,9 +181,7 @@ const getDownUsers = async (req, res, next) => {
     let token = req.headers["authorization"];
     let myToken = token.split(" ")[1];
     let myData = jwt.verify(myToken, "shhhhh");
-    console.log({
-      myData: myData,
-    });
+
     const userDownlineList = await userModel
       .find({
         upline: myData._id,
@@ -203,7 +191,7 @@ const getDownUsers = async (req, res, next) => {
     res.status(200).send({
       success: true,
       message: "Login!",
-      response: { userDownlineList },
+      response: myData._id ? { userDownlineList } : { userDownlineList: [] },
     });
   } catch (err) {
     res.status(400).send({

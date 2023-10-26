@@ -19,7 +19,7 @@ userRouter.post("/signup", signupUser);
 userRouter.post("/login", login);
 userRouter.get("/registered_users", getUserList);
 userRouter.post("/update", updateUser);
-userRouter.delete("/delete", deleteUser);
+userRouter.post("/delete", deleteUser);
 userRouter.get("/get_downline", getDownUsers);
 
 module.exports = userRouter;
