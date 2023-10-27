@@ -108,8 +108,11 @@ const getUserList = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
   const { email, password } = req.body;
   try {
-    let pass = null;
-    if (password) {
+    let userOldData = await userModel.findOne({
+      email: email,
+    });
+    let pass = userOldData.password;
+    if (password !== pass) {
       pass = await bcrypt.hash(password, saltRounds);
     }
 
@@ -121,6 +124,13 @@ const updateUser = async (req, res, next) => {
       : {
           ...req.body,
         };
+
+    var token = jwt.sign(
+      {
+        ...my_data,
+      },
+      "shhhhh"
+    );
 
     delete my_data.email;
 
@@ -141,7 +151,7 @@ const updateUser = async (req, res, next) => {
     res.status(200).send({
       success: true,
       message: "Update User Successfully!",
-      response: { user },
+      response: { user, token },
     });
   } catch (err) {
     res.status(400).send({
@@ -202,6 +212,26 @@ const getDownUsers = async (req, res, next) => {
   }
 };
 
+const getUserData = async (req, res, next) => {
+  try {
+    let token = req.headers["authorization"];
+    let myToken = token.split(" ")[1];
+    let myData = jwt.verify(myToken, "shhhhh");
+
+    res.status(200).send({
+      success: true,
+      message: "Login!",
+      response: { myData },
+    });
+  } catch (err) {
+    res.status(400).send({
+      success: false,
+      message: "Login failed",
+      error: err,
+    });
+  }
+};
+
 module.exports = {
   signupUser,
   login,
@@ -209,4 +239,5 @@ module.exports = {
   updateUser,
   deleteUser,
   getDownUsers,
+  getUserData,
 };

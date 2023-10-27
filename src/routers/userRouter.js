@@ -6,6 +6,7 @@ const {
   updateUser,
   deleteUser,
   getDownUsers,
+  getUserData,
 } = require("../controller/userController");
 const userRouter = express.Router();
 
@@ -21,5 +22,6 @@ userRouter.get("/registered_users", getUserList);
 userRouter.post("/update", updateUser);
 userRouter.post("/delete", deleteUser);
 userRouter.get("/get_downline", getDownUsers);
+userRouter.get("/get_data", getUserData);
 
 module.exports = userRouter;
